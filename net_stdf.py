@@ -74,8 +74,16 @@ class STDF(nn.Module):
         #   in_nc: each map use individual offset and mask 7
         #   2*size_dk: 2 coordinates for each point (每个点偏移的坐标(x,y))
         #   1*size_dk: 1 confidence (attention) score for each point (每个点的权重(注意力)分数)
-        self.offset_mask = nn.Conv2d( # output channel :7*3*9 = 189
-            nf, in_nc*3*self.size_dk, base_ks, padding=base_ks//2
+        # self.offset_mask = nn.Conv2d( # output channel :7*3*9 = 189
+        #     nf, in_nc*3*self.size_dk, base_ks, padding=base_ks//2
+        # )
+
+        # 深度可分离卷积实现
+        self.offset_mask = nn.Sequential(
+            # deep wise conv
+            nn.Conv2d(in_channels=nf, out_channels=nf,kernel_size=base_ks,stride=1,padding=base_ks // 2,groups=nf),
+            # point wise conv
+            nn.Conv2d(nf, in_nc * 3 * self.size_dk, 1, padding=0)
         )
 
         # deformable conv
